@@ -3,6 +3,7 @@ package com.vasiukeviciute.a.ZooAnimalsManagement.Model;
 
 
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -24,8 +25,14 @@ public class Environment {
     @ElementCollection
     private List<String> objects;
 
+    @JsonManagedReference
     @OneToMany(mappedBy = "environment", cascade = CascadeType.PERSIST)
     private List<Animal> animals = new ArrayList<>();
+
+    public void addAnimal(Animal animal) {
+        animal.setEnvironment(this);
+        animals.add(animal);
+    }
 
 
     public Environment() {

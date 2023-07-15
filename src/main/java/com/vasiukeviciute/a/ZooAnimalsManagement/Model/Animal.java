@@ -1,6 +1,7 @@
 package com.vasiukeviciute.a.ZooAnimalsManagement.Model;
 
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -18,11 +19,19 @@ public class Animal {
     private String food;
     private int amount;
 
+    @JsonBackReference
     @ManyToOne(cascade = CascadeType.PERSIST)
-    @JoinColumn(name = "environment_id")
+    @JoinColumn(name = "enclosureId")
     private Environment environment;
-
-
+    @Transient
+    private Long enclosureId;
+    public Long getEnclosureId() {
+        if (environment != null) {
+            return environment.getId();
+        } else {
+            return null;
+        }
+    }
 
     public Animal() {
     }

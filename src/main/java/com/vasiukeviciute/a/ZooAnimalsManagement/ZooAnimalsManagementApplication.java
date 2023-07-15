@@ -13,7 +13,6 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.json.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -41,6 +40,7 @@ public class ZooAnimalsManagementApplication {
 		loadEnvironments();
 
 	}
+	//From json file load the enclosures data and store to the database
 	private void loadEnvironments() {
 		try{
 			ObjectMapper objectMapper = new ObjectMapper();
@@ -52,7 +52,7 @@ public class ZooAnimalsManagementApplication {
 				String size = environmentNode.get("size").asText();
 				String location = environmentNode.get("location").asText();
 
-				// Check if the environment with the same name already exists in the database
+				// Check if the enclosure with the same name already exists in the database
 				Optional<Environment> existingEnvironment = environmentRepository.findByName(name);
 				if (existingEnvironment.isPresent()) {
 					// Environment already exists, skip insertion
@@ -85,7 +85,7 @@ public class ZooAnimalsManagementApplication {
 			e.printStackTrace();
 		}
 	}
-
+	//From json file load the animals data and store to the database
 	private void loadAnimals() {
 		try {
 			ObjectMapper objectMapper = new ObjectMapper();
@@ -102,7 +102,7 @@ public class ZooAnimalsManagementApplication {
 				// Check if the animal with the same species already exists in the database
 				Optional<Animal> existingAnimal = animalRepository.findBySpecies(species);
 				if (existingAnimal.isPresent()) {
-					// Animal already exists, skip insertion
+					// If animal with the same species exist, skip insertion
 					System.out.println("Animal with species " + species + " already exists in the database.");
 					continue;
 				}
