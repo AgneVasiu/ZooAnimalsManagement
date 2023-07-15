@@ -113,7 +113,7 @@ public class ZooAnimalsManagementApplication {
 				animal.setFood(food);
 				animal.setAmount(amount);
 				animalRepository.save(animal);
-				// Do something with the data
+				// Print data
 				System.out.println("species: " + species);
 				System.out.println("food: " + food);
 				System.out.println("amount: " + amount);
