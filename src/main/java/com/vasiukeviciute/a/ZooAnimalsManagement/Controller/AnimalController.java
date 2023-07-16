@@ -59,7 +59,7 @@ public class AnimalController {
         return ResponseEntity.status(HttpStatus.CREATED).body(savedAnimal);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/transfer/{id}")
     public ResponseEntity<Animal> updateAnimalEnclosure(@PathVariable Long id, @RequestParam(name = "enclosureId") Long enclosureId) {
         Optional<Animal> optionalAnimal = animalRepository.findById(id);
         Optional<Environment> optionalEnvironment = environmentRepository.findById(enclosureId);
@@ -70,6 +70,22 @@ public class AnimalController {
             animal.setEnvironment(environment);
             animalRepository.save(animal);
             return ResponseEntity.ok(animal);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+    @PutMapping("/{id}")
+    public ResponseEntity<Animal> updateAnimal(@PathVariable Long id, @RequestBody Animal updatedAnimal) {
+        Optional<Animal> optionalAnimal = animalRepository.findById(id);
+
+        if (optionalAnimal.isPresent()) {
+            Animal existingAnimal = optionalAnimal.get();
+            existingAnimal.setSpecies(updatedAnimal.getSpecies());
+            existingAnimal.setFood(updatedAnimal.getFood());
+            existingAnimal.setAmount(updatedAnimal.getAmount());
+
+            Animal savedAnimal = animalRepository.save(existingAnimal);
+            return ResponseEntity.ok(savedAnimal);
         } else {
             return ResponseEntity.notFound().build();
         }
@@ -86,10 +102,10 @@ public class AnimalController {
         List<Animal> allAnimals = animalRepository.findAll();
         List<Environment> allEnvironments = environmentRepository.findAll();
 
-        // Group animals based on if they are herbivore or carnivore
+        // Grouping animals based on if they are herbivore or carnivore
         List<List<Animal>> animalGroups = groupAnimalsByFood(allAnimals);
 
-        // Assign enclosures to the animals
+        // Assigning enclosures to the animals
         assignAnimalsToEnvironments(animalGroups, allEnvironments);
 
         return ResponseEntity.ok("Animals transferred to enclosures successfully.");
@@ -120,28 +136,60 @@ public class AnimalController {
     }
 
     private void assignHerbivoreAnimals(List<Animal> herbivoreAnimals, List<Environment> environments) {
-        // Group herbivore animals by their species
+        // Grouping animals by their species
         Map<String, List<Animal>> herbivoreGroups = herbivoreAnimals.stream()
                 .collect(Collectors.groupingBy(Animal::getSpecies));
 
+        boolean assignedToHugeEnclosure = false; // For Tracking if animals are assigned to huge enclosure
+
         for (List<Animal> group : herbivoreGroups.values()) {
             boolean assigned = false;
+
+            // Assigning to huge enclosure if enclosure is available
             for (Environment environment : environments) {
-                if (environment.getAnimals().isEmpty() && isLargeOrHugeEnclosure(environment)) {
+                if (isHugeEnclosure(environment) && environment.getAnimals().isEmpty()) {
                     for (Animal herbivore : group) {
-                        environment.addAnimal(herbivore);
-                        environmentRepository.save(environment);
+                        if (herbivore.getEnvironment() == null) {
+                            // Function to see if animal has not been assigned to the enclosure
+                            environment.addAnimal(herbivore);
+                            herbivore.setEnvironment(environment);
+                            environmentRepository.save(environment);
+                            animalRepository.save(herbivore);
+                        }
                     }
                     assigned = true;
+                    assignedToHugeEnclosure = true;
                     break;
+                }
+            }
+
+            if (!assignedToHugeEnclosure) {
+                // Assign to other enclosure
+                for (Environment environment : environments) {
+                    if (isLargeEnclosure(environment) && environment.getAnimals().isEmpty()) {
+                        for (Animal herbivore : group) {
+                            if (herbivore.getEnvironment() == null) {
+                                environment.addAnimal(herbivore);
+                                herbivore.setEnvironment(environment);
+                                environmentRepository.save(environment);
+                                animalRepository.save(herbivore);
+                            }
+                        }
+                        assigned = true;
+                        break;
+                    }
                 }
             }
 
             if (!assigned && !environments.isEmpty()) {
                 Environment suitableEnvironment = environments.get(0);
                 for (Animal herbivore : group) {
-                    suitableEnvironment.addAnimal(herbivore);
-                    environmentRepository.save(suitableEnvironment);
+                    if (herbivore.getEnvironment() == null) {
+                        suitableEnvironment.addAnimal(herbivore);
+                        herbivore.setEnvironment(suitableEnvironment);
+                        environmentRepository.save(suitableEnvironment);
+                        animalRepository.save(herbivore);
+                    }
                 }
             }
         }
@@ -154,20 +202,25 @@ public class AnimalController {
 
         for (List<Animal> group : carnivoreGroups.values()) {
             for (Animal carnivore : group) {
+                //function to prevent animals assigned to the enclosure to be resigned again
+                if (carnivore.getEnvironment() != null) {
+                    continue;
+                }
                 Environment suitableEnvironment = null;
 
-                // Find an enclosure that is empty or is without herbivore animals
+                //Function to find the empty environment without herbivore animals
                 for (Environment environment : environments) {
-                    if (environment.getAnimals().isEmpty() && !containsConsumableObjects(environment, carnivore) && !containsHerbivores(environment)) {
+                    if (environment.getAnimals().isEmpty() && !containsConsumableObjects(environment, carnivore) && !containsHerbivores(environment) && environment.getAnimals().isEmpty()) {
                         suitableEnvironment = environment;
                         break;
                     }
                 }
 
-                // If no empty enclosures left find and assign enclosure without herbivores
+                // function to see if there is any empty enclosures left and in case there is not than assign
+                // the enclosure with carnivores in them and not herbivores
                 if (suitableEnvironment == null && !environments.isEmpty()) {
                     for (Environment environment : environments) {
-                        if (!containsHerbivores(environment)) {
+                        if (!containsHerbivores(environment) && environment.getAnimals().size() <= 2) {
                             suitableEnvironment = environment;
                             break;
                         }
@@ -204,9 +257,12 @@ public class AnimalController {
         return false;
     }
 
-    private boolean isLargeOrHugeEnclosure(Environment environment) {
-        String size = environment.getSize().toLowerCase();
-        return size.equals("large") || size.equals("huge");
+    private boolean isHugeEnclosure(Environment environment) {
+        return environment.getSize().equalsIgnoreCase("Huge");
+    }
+
+    private boolean isLargeEnclosure(Environment environment) {
+        return environment.getSize().equalsIgnoreCase("Large");
     }
 }
 

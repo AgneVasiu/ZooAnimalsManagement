@@ -40,6 +40,21 @@ public class EnvironmentController {
         Environment savedEnvironment = environmentRepository.save(environment);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedEnvironment);
     }
+    @PutMapping("/{id}")
+    public ResponseEntity<Environment> updateEnvironment(@PathVariable Long id, @RequestBody Environment updatedEnvironment) {
+        Optional<Environment> optionalEnvironment = environmentRepository.findById(id);
+
+        if (optionalEnvironment.isPresent()) {
+            Environment existingEnvironment = optionalEnvironment.get();
+            existingEnvironment.setName(updatedEnvironment.getName());
+            existingEnvironment.setSize(updatedEnvironment.getSize());
+            existingEnvironment.setObjects(updatedEnvironment.getObjects());
+            environmentRepository.save(existingEnvironment);
+            return ResponseEntity.ok(existingEnvironment);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteEnvironment(@PathVariable Long id) {
