@@ -18,11 +18,12 @@ public class EnvironmentController {
     public EnvironmentController(EnvironmentRepository environmentRepository) {
         this.environmentRepository = environmentRepository;
     }
-
+//get all the enclosures
     @GetMapping
     public List<Environment> getAllEnvironments() {
         return environmentRepository.findAll();
     }
+    //get enclosure by id
     @GetMapping("/{id}")
     public ResponseEntity<Environment> getEnvironmentById(@PathVariable Long id) {
         Optional<Environment> optionalEnvironment = environmentRepository.findById(id);
@@ -34,12 +35,13 @@ public class EnvironmentController {
             return ResponseEntity.notFound().build();
         }
     }
-
+//add new enclosure
     @PostMapping
     public ResponseEntity<Environment> addEnvironment(@RequestBody Environment environment) {
         Environment savedEnvironment = environmentRepository.save(environment);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedEnvironment);
     }
+    //update enclosure details by id
     @PutMapping("/{id}")
     public ResponseEntity<Environment> updateEnvironment(@PathVariable Long id, @RequestBody Environment updatedEnvironment) {
         Optional<Environment> optionalEnvironment = environmentRepository.findById(id);
@@ -55,7 +57,7 @@ public class EnvironmentController {
             return ResponseEntity.notFound().build();
         }
     }
-
+//delete enclosure by id
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteEnvironment(@PathVariable Long id) {
         environmentRepository.deleteById(id);

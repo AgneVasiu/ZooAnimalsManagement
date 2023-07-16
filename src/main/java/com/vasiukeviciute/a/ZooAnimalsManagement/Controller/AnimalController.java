@@ -13,6 +13,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
+@CrossOrigin("http://localhost:3000")
 @RequestMapping("/animals")
 public class AnimalController {
     private final AnimalRepository animalRepository;
@@ -24,12 +25,12 @@ public class AnimalController {
         this.animalRepository = animalRepository;
         this.environmentRepository = environmentRepository;
     }
-
+//Get request to get all the animals with or without enclosure prescribed
     @GetMapping
     public List<Animal> getAllAnimals() {
         return animalRepository.findAll();
     }
-
+//Get Animals by id show only one animal details with the selected id
     @GetMapping("/{id}")
     public ResponseEntity<Animal> getAnimalById(@PathVariable Long id) {
         Optional<Animal> optionalAnimal = animalRepository.findById(id);
@@ -45,20 +46,20 @@ public class AnimalController {
             return ResponseEntity.notFound().build();
         }
     }
-
+//gets animals that have enclosures
     @GetMapping("/enclosure")
     public List<Animal> getAllAnimalsInEnclosures() {
         List<Animal> animals = animalRepository.findAllWithEnclosure();
         animals.forEach(animal -> animal.setEnclosureId(animal.getEnvironment().getId()));
         return animals;
     }
-
+//Add new animal
     @PostMapping
     public ResponseEntity<Animal> addAnimal(@RequestBody Animal animal) {
         Animal savedAnimal = animalRepository.save(animal);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedAnimal);
     }
-
+//update the enclosure that the animal is put in by animal id
     @PutMapping("/transfer/{id}")
     public ResponseEntity<Animal> updateAnimalEnclosure(@PathVariable Long id, @RequestParam(name = "enclosureId") Long enclosureId) {
         Optional<Animal> optionalAnimal = animalRepository.findById(id);
@@ -74,6 +75,7 @@ public class AnimalController {
             return ResponseEntity.notFound().build();
         }
     }
+    //Update selected animal data by animal id
     @PutMapping("/{id}")
     public ResponseEntity<Animal> updateAnimal(@PathVariable Long id, @RequestBody Animal updatedAnimal) {
         Optional<Animal> optionalAnimal = animalRepository.findById(id);
@@ -90,13 +92,14 @@ public class AnimalController {
             return ResponseEntity.notFound().build();
         }
     }
-
+//remove animal
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteAnimal(@PathVariable Long id) {
         animalRepository.deleteById(id);
         return ResponseEntity.noContent().build();
     }
-
+//Automatically prescribe to all animals that does not have enclosures enclosure that is based on their food performances
+    //Carnivores only put with carnivores if there is no free enclosures and herbivores are added together
     @PostMapping("/transfer")
     public ResponseEntity<String> transferAnimals() {
         List<Animal> allAnimals = animalRepository.findAll();
@@ -140,7 +143,7 @@ public class AnimalController {
         Map<String, List<Animal>> herbivoreGroups = herbivoreAnimals.stream()
                 .collect(Collectors.groupingBy(Animal::getSpecies));
 
-        boolean assignedToHugeEnclosure = false; // For Tracking if animals are assigned to huge enclosure
+        boolean assignedToHugeEnclosure = false; // To track if animals are assigned to huge enclosure
 
         for (List<Animal> group : herbivoreGroups.values()) {
             boolean assigned = false;

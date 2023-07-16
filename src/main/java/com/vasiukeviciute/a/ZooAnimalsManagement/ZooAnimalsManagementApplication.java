@@ -55,7 +55,7 @@ public class ZooAnimalsManagementApplication {
 				// Check if the enclosure with the same name already exists in the database
 				Optional<Environment> existingEnvironment = environmentRepository.findByName(name);
 				if (existingEnvironment.isPresent()) {
-					// Environment already exists, skip insertion
+					// Environment already exists, skip
 					System.out.println("Environment with name " + name + " already exists in the database.");
 					continue;
 				}
@@ -102,7 +102,7 @@ public class ZooAnimalsManagementApplication {
 				// Check if the animal with the same species already exists in the database
 				Optional<Animal> existingAnimal = animalRepository.findBySpecies(species);
 				if (existingAnimal.isPresent()) {
-					// If animal with the same species exist, skip insertion
+					// If animal with the same species exist, skip
 					System.out.println("Animal with species " + species + " already exists in the database.");
 					continue;
 				}
@@ -113,7 +113,7 @@ public class ZooAnimalsManagementApplication {
 				animal.setFood(food);
 				animal.setAmount(amount);
 				animalRepository.save(animal);
-				// Print data
+				// Print data for check
 				System.out.println("species: " + species);
 				System.out.println("food: " + food);
 				System.out.println("amount: " + amount);
